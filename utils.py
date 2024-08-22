@@ -1,7 +1,6 @@
 import random
 
 import ujson as json
-from loguru import logger
 
 from src.image2image import prepare_json
 from utils.imgtools import (
@@ -10,6 +9,7 @@ from utils.imgtools import (
     img_to_base64,
     revert_img_info,
 )
+from utils.prepare import logger
 from utils.utils import (
     file_namel2pathl,
     file_path2list,
