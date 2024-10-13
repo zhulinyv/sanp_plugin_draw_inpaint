@@ -15,7 +15,6 @@ from utils.utils import (
     file_path2list,
     file_path2name,
     generate_image,
-    inquire_anlas,
     save_image,
 )
 
@@ -38,7 +37,6 @@ def for_webui(
     inpaint_sm_dyn,
     inpaint_seed,
 ):
-    logger.warning(f"剩余水晶: {inquire_anlas()}")
     if open_button:
         main(input_path, mask_path)
         return None, "处理完成, 图片已保存到 ./output/inpaint..."
@@ -95,7 +93,7 @@ def inpaint(img_path, mask_path, *args):
     saved_path = save_image(
         generate_image(json_for_inpaint),
         "inpaint",
-        (json.loads(imginfo["Comment"]))["seed"],
+        json_for_inpaint["parameters"]["seed"],
         "None",
         "None",
     )
