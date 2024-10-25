@@ -5,12 +5,15 @@ import gradio as gr
 from plugins.inpaint.sanp_plugin_draw_inpaint.utils import for_webui as draw_inpaint
 from utils.env import env
 from utils.utils import (
+    FAVORTES_FILE,
     NOISE_SCHEDULE,
     RESOLUTION,
     SAMPLER,
+    add_wildcard_to_textbox,
     open_folder,
     read_json,
     return_random,
+    update_name_to_dropdown_list,
 )
 
 webui_language = read_json(f"./files/languages/{env.webui_lang}/webui.json")
@@ -64,83 +67,110 @@ def plugin():
                     label=webui_language["i2i"]["open_button"],
                     scale=1,
                 )
-            with gr.Row():
-                draw_inpaint_input_image = gr.ImageEditor(
-                    sources=["upload", "clipboard", "webcam"],
-                    type="pil",
-                    label=webui_language["inpaint"]["inpaint_img"],
-                )
+            with gr.Tab("生成参数"):
+                with gr.Row():
+                    draw_inpaint_input_image = gr.ImageEditor(
+                        sources=["upload", "clipboard", "webcam"],
+                        type="pil",
+                        label=webui_language["inpaint"]["inpaint_img"],
+                    )
+                    with gr.Column():
+                        draw_inpaint_output_information = gr.Textbox(
+                            label=webui_language["i2i"]["output_info"]
+                        )
+                        draw_inpaint_output_image = gr.Image()
                 with gr.Column():
-                    draw_inpaint_output_information = gr.Textbox(
-                        label=webui_language["i2i"]["output_info"]
-                    )
-                    draw_inpaint_output_image = gr.Image()
-            with gr.Column():
-                with gr.Row():
-                    draw_inpaint_resolution = gr.Dropdown(
-                        RESOLUTION,
-                        value="832x1216",
-                        label=webui_language["t2i"]["resolution"],
-                    )
-                    draw_inpaint_sampler = gr.Dropdown(
-                        SAMPLER,
-                        value="k_euler",
-                        label=webui_language["t2i"]["sampler"],
-                    )
-                    draw_inpaint_noise_schedule = gr.Dropdown(
-                        NOISE_SCHEDULE,
-                        value="native",
-                        label=webui_language["t2i"]["noise_schedule"],
-                    )
-                with gr.Row():
-                    draw_inpaint_strength = gr.Slider(
-                        minimum=0,
-                        maximum=1,
-                        value=0.5,
-                        step=0.1,
-                        label=webui_language["i2i"]["strength"],
-                    )
-                    draw_inpaint_noise = gr.Slider(
-                        minimum=0,
-                        maximum=1,
-                        value=0,
-                        step=0.1,
-                        label=webui_language["i2i"]["noise"],
-                    )
-                    draw_inpaint_scale = gr.Slider(
-                        minimum=0,
-                        maximum=10,
-                        value=5,
-                        step=0.1,
-                        label=webui_language["t2i"]["scale"],
-                    )
-                    draw_inpaint_steps = gr.Slider(
-                        minimum=0,
-                        maximum=50,
-                        value=28,
-                        step=1,
-                        label=webui_language["t2i"]["steps"],
-                    )
-                with gr.Row():
-                    draw_inpaint_sm = gr.Radio(
-                        [True, False], value=False, label="sm", scale=2
-                    )
-                    draw_inpaint_sm_dyn = gr.Radio(
-                        [True, False],
-                        value=False,
-                        label=webui_language["t2i"]["smdyn"],
-                        scale=2,
-                    )
-                    with gr.Column(scale=1):
-                        draw_inpaint_seed = gr.Textbox(
-                            value="-1", label=webui_language["t2i"]["seed"], scale=7
+                    with gr.Row():
+                        draw_inpaint_resolution = gr.Dropdown(
+                            RESOLUTION,
+                            value="832x1216",
+                            label=webui_language["t2i"]["resolution"],
                         )
-                        draw_inpaint_random_button = gr.Button(
-                            value="♻️", size="sm", scale=1
+                        draw_inpaint_sampler = gr.Dropdown(
+                            SAMPLER,
+                            value="k_euler",
+                            label=webui_language["t2i"]["sampler"],
                         )
-                        draw_inpaint_random_button.click(
-                            return_random, inputs=None, outputs=draw_inpaint_seed
+                        draw_inpaint_noise_schedule = gr.Dropdown(
+                            NOISE_SCHEDULE,
+                            value="native",
+                            label=webui_language["t2i"]["noise_schedule"],
                         )
+                    with gr.Row():
+                        draw_inpaint_strength = gr.Slider(
+                            minimum=0,
+                            maximum=1,
+                            value=0.5,
+                            step=0.1,
+                            label=webui_language["i2i"]["strength"],
+                        )
+                        draw_inpaint_noise = gr.Slider(
+                            minimum=0,
+                            maximum=1,
+                            value=0,
+                            step=0.1,
+                            label=webui_language["i2i"]["noise"],
+                        )
+                        draw_inpaint_scale = gr.Slider(
+                            minimum=0,
+                            maximum=10,
+                            value=5,
+                            step=0.1,
+                            label=webui_language["t2i"]["scale"],
+                        )
+                        draw_inpaint_steps = gr.Slider(
+                            minimum=0,
+                            maximum=50,
+                            value=28,
+                            step=1,
+                            label=webui_language["t2i"]["steps"],
+                        )
+                    with gr.Row():
+                        draw_inpaint_sm = gr.Radio(
+                            [True, False], value=False, label="sm", scale=2
+                        )
+                        draw_inpaint_sm_dyn = gr.Radio(
+                            [True, False],
+                            value=False,
+                            label=webui_language["t2i"]["smdyn"],
+                            scale=2,
+                        )
+                        with gr.Column(scale=1):
+                            draw_inpaint_seed = gr.Textbox(
+                                value="-1", label=webui_language["t2i"]["seed"], scale=7
+                            )
+                            draw_inpaint_random_button = gr.Button(
+                                value="♻️", size="sm", scale=1
+                            )
+                            draw_inpaint_random_button.click(
+                                return_random, inputs=None, outputs=draw_inpaint_seed
+                            )
+            with gr.Tab("wildcards"):
+                with gr.Row():
+                    draw_inpaint_wildcard_file = gr.Dropdown(
+                        choices=FAVORTES_FILE,
+                        label="wildcard文件",
+                    )
+                    draw_inpaint_wildcard_name = gr.Dropdown(label="名称")
+                    draw_inpaint_wildcard_file.change(
+                        update_name_to_dropdown_list,
+                        inputs=draw_inpaint_wildcard_file,
+                        outputs=draw_inpaint_wildcard_name,
+                    )
+                    draw_inpaint_add_wildcard_button = gr.Button("添加到文本框")
+                    draw_inpaint_add_wildcard_button.click(
+                        add_wildcard_to_textbox,
+                        inputs=[
+                            draw_inpaint_positive_input,
+                            draw_inpaint_negative_input,
+                            draw_inpaint_wildcard_file,
+                            draw_inpaint_wildcard_name,
+                        ],
+                        outputs=[
+                            draw_inpaint_positive_input,
+                            draw_inpaint_negative_input,
+                        ],
+                    )
         draw_inpaint_generate_button.click(
             fn=draw_inpaint,
             inputs=[
