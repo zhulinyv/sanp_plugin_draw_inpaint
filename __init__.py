@@ -13,6 +13,7 @@ from utils.utils import (
     open_folder,
     read_json,
     return_random,
+    return_wildcard_tag,
     update_name_to_dropdown_list,
 )
 
@@ -171,6 +172,12 @@ def plugin():
                             draw_inpaint_negative_input,
                         ],
                     )
+                draw_inpaint_wildcard_tag = gr.Textbox(label="tag")
+                draw_inpaint_wildcard_name.change(
+                    return_wildcard_tag,
+                    inputs=[draw_inpaint_wildcard_file, draw_inpaint_wildcard_name],
+                    outputs=draw_inpaint_wildcard_tag,
+                )
         draw_inpaint_generate_button.click(
             fn=draw_inpaint,
             inputs=[
