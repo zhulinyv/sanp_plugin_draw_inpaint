@@ -15,6 +15,7 @@ from utils.utils import (
     file_path2list,
     file_path2name,
     generate_image,
+    return_x64,
     save_image,
 )
 
@@ -22,60 +23,71 @@ from utils.utils import (
 def for_webui(
     input_path,
     mask_path,
-    inpaint_input_image,
+    draw_inpaint_input_image,
     open_button,
-    inpaint_positive_input,
-    inpaint_negative_input,
-    inpaint_resolution,
-    inpaint_sampler,
-    inpaint_noise_schedule,
-    inpaint_strength,
-    inpaint_noise,
-    inpaint_scale,
-    inpaint_steps,
-    inpaint_sm,
-    inpaint_sm_dyn,
-    inpaint_seed,
+    draw_inpaint_positive_input,
+    draw_inpaint_negative_input,
+    inpaint_width,
+    inpaint_height,
+    draw_inpaint_sampler,
+    draw_inpaint_noise_schedule,
+    draw_inpaint_strength,
+    draw_inpaint_noise,
+    draw_inpaint_scale,
+    draw_inpaint_steps,
+    draw_inpaint_sm,
+    draw_inpaint_sm_dyn,
+    draw_inpaint_variety,
+    draw_inpaint_decrisp,
+    draw_inpaint_seed,
 ):
     if open_button:
         main(input_path, mask_path)
         return None, "处理完成, 图片已保存到 ./output/inpaint..."
     else:
-        (inpaint_input_image["composite"]).save("./output/temp_inpaint_img.png")
-        (inpaint_input_image["layers"][0]).save("./output/temp_inpaint_mask.png")
-        change_the_mask_color_to_white("./output/temp_inpaint_mask.png")
+        (draw_inpaint_input_image["composite"]).save(
+            "./output/temp_draw_inpaint_img.png"
+        )
+        (draw_inpaint_input_image["layers"][0]).save(
+            "./output/temp_draw_inpaint_mask.png"
+        )
+        change_the_mask_color_to_white("./output/temp_draw_inpaint_mask.png")
 
         info = {
             "Software": "NovelAI",
             "Comment": json.dumps(
                 {
-                    "prompt": inpaint_positive_input,
-                    "steps": inpaint_steps,
-                    "height": int(inpaint_resolution.split("x")[1]),
-                    "width": int(inpaint_resolution.split("x")[0]),
-                    "scale": inpaint_scale,
+                    "prompt": draw_inpaint_positive_input,
+                    "steps": draw_inpaint_steps,
+                    "height": return_x64(int(inpaint_height)),
+                    "width": return_x64(int(inpaint_width)),
+                    "scale": draw_inpaint_scale,
                     "seed": (
                         random.randint(1000000000, 9999999999)
-                        if inpaint_seed == "-1"
-                        else int(inpaint_seed)
+                        if draw_inpaint_seed == "-1"
+                        else int(draw_inpaint_seed)
                     ),
-                    "noise_schedule": inpaint_noise_schedule,
-                    "sampler": inpaint_sampler,
-                    "sm": inpaint_sm,
-                    "sm_dyn": inpaint_sm_dyn,
-                    "uc": inpaint_negative_input,
+                    "noise_schedule": draw_inpaint_noise_schedule,
+                    "sampler": draw_inpaint_sampler,
+                    "sm": draw_inpaint_sm,
+                    "sm_dyn": draw_inpaint_sm_dyn,
+                    "skip_cfg_above_sigma": (
+                        19.343056794463642 if draw_inpaint_variety else None
+                    ),
+                    "dynamic_thresholding": draw_inpaint_decrisp,
+                    "uc": draw_inpaint_negative_input,
                 }
             ),
         }
 
-        revert_img_info(None, "./output/temp_inpaint_img.png", info)
+        revert_img_info(None, "./output/temp_draw_inpaint_img.png", info)
 
         logger.info("开始重绘...")
         path = inpaint(
-            "./output/temp_inpaint_img.png",
-            "./output/temp_inpaint_mask.png",
-            inpaint_strength,
-            inpaint_noise,
+            "./output/temp_draw_inpaint_img.png",
+            "./output/temp_draw_inpaint_mask.png",
+            draw_inpaint_strength,
+            draw_inpaint_noise,
         )
     return path, None
 

@@ -3,6 +3,7 @@ from pathlib import Path
 import gradio as gr
 
 from plugins.inpaint.sanp_plugin_draw_inpaint.utils import for_webui as draw_inpaint
+from src.text2image_nsfw import return_resolution
 from utils.env import env
 from utils.utils import (
     FAVORTES_FILE,
@@ -14,6 +15,7 @@ from utils.utils import (
     read_json,
     return_random,
     return_wildcard_tag,
+    update_image_size,
     update_name_to_dropdown_list,
 )
 
@@ -75,6 +77,11 @@ def plugin():
                         type="pil",
                         label=webui_language["inpaint"]["inpaint_img"],
                     )
+                    draw_inpaint_input_image.change(
+                        update_image_size,
+                        inputs=draw_inpaint_input_image,
+                        outputs=draw_inpaint_input_image,
+                    )
                     with gr.Column():
                         draw_inpaint_output_information = gr.Textbox(
                             label=webui_language["i2i"]["output_info"]
@@ -84,8 +91,26 @@ def plugin():
                     with gr.Row():
                         draw_inpaint_resolution = gr.Dropdown(
                             RESOLUTION,
-                            value="832x1216",
+                            value=(
+                                "832x1216"
+                                if env.img_size == -1
+                                else "{}x{}".format(
+                                    (env.img_size)[0], (env.img_size)[1]
+                                )
+                            ),
                             label=webui_language["t2i"]["resolution"],
+                        )
+                        draw_inpaint_width = gr.Textbox(
+                            value="832", label=webui_language["t2i"]["width"]
+                        )
+                        draw_inpaint_height = gr.Textbox(
+                            value="1216", label=webui_language["t2i"]["height"]
+                        )
+                        draw_inpaint_resolution.change(
+                            return_resolution,
+                            draw_inpaint_resolution,
+                            outputs=[draw_inpaint_width, draw_inpaint_height],
+                            show_progress="hidden",
                         )
                         draw_inpaint_sampler = gr.Dropdown(
                             SAMPLER,
@@ -127,15 +152,22 @@ def plugin():
                             label=webui_language["t2i"]["steps"],
                         )
                     with gr.Row():
-                        draw_inpaint_sm = gr.Radio(
-                            [True, False], value=False, label="sm", scale=2
-                        )
-                        draw_inpaint_sm_dyn = gr.Radio(
-                            [True, False],
-                            value=False,
-                            label=webui_language["t2i"]["smdyn"],
-                            scale=2,
-                        )
+                        with gr.Column():
+                            draw_inpaint_sm = gr.Checkbox(
+                                value=False, label="sm", scale=2
+                            )
+                            draw_inpaint_sm_dyn = gr.Checkbox(
+                                value=False,
+                                label=webui_language["t2i"]["smdyn"],
+                                scale=2,
+                            )
+                        with gr.Column():
+                            draw_inpaint_variety = gr.Checkbox(
+                                value=False, label="variety"
+                            )
+                            draw_inpaint_decrisp = gr.Checkbox(
+                                value=False, label="decrisp"
+                            )
                         with gr.Column(scale=1):
                             draw_inpaint_seed = gr.Textbox(
                                 value="-1", label=webui_language["t2i"]["seed"], scale=7
@@ -187,7 +219,8 @@ def plugin():
                 draw_inpaint_batch_switch,
                 draw_inpaint_positive_input,
                 draw_inpaint_negative_input,
-                draw_inpaint_resolution,
+                draw_inpaint_width,
+                draw_inpaint_height,
                 draw_inpaint_sampler,
                 draw_inpaint_noise_schedule,
                 draw_inpaint_strength,
@@ -196,6 +229,8 @@ def plugin():
                 draw_inpaint_steps,
                 draw_inpaint_sm,
                 draw_inpaint_sm_dyn,
+                draw_inpaint_variety,
+                draw_inpaint_decrisp,
                 draw_inpaint_seed,
             ],
             outputs=[draw_inpaint_output_image, draw_inpaint_output_information],
