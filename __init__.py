@@ -57,31 +57,35 @@ def plugin():
                     draw_inpaint_generate_button = gr.Button(
                         value=webui_language["t2i"]["generate_button"], scale=1
                     )
-            with gr.Row():
-                draw_inpaint_input_path = gr.Textbox(
-                    value="", label=webui_language["inpaint"]["input_path"], scale=5
-                )
-                draw_inpaint_mask_path = gr.Textbox(
-                    value="", label=webui_language["inpaint"]["mask_path"], scale=5
-                )
-                draw_inpaint_batch_switch = gr.Radio(
-                    [True, False],
-                    value=False,
-                    label=webui_language["i2i"]["open_button"],
-                    scale=1,
-                )
             with gr.Tab("生成参数"):
                 with gr.Row():
-                    draw_inpaint_input_image = gr.ImageEditor(
-                        sources=["upload", "clipboard", "webcam"],
-                        type="pil",
-                        label=webui_language["inpaint"]["inpaint_img"],
+                    draw_inpaint_input_path = gr.Textbox(
+                        value="", label=webui_language["inpaint"]["input_path"], scale=5
                     )
-                    draw_inpaint_input_image.change(
-                        update_image_size,
-                        inputs=draw_inpaint_input_image,
-                        outputs=draw_inpaint_input_image,
+                    draw_inpaint_mask_path = gr.Textbox(
+                        value="", label=webui_language["inpaint"]["mask_path"], scale=5
                     )
+                    draw_inpaint_batch_switch = gr.Radio(
+                        [True, False],
+                        value=False,
+                        label=webui_language["i2i"]["open_button"],
+                        scale=1,
+                    )
+                with gr.Row():
+                    with gr.Column():
+                        draw_inpaint_input_image = gr.ImageEditor(
+                            sources=["upload", "clipboard", "webcam"],
+                            type="pil",
+                            label=webui_language["inpaint"]["inpaint_img"],
+                        )
+                        draw_inpaint_input_image.change(
+                            update_image_size,
+                            inputs=draw_inpaint_input_image,
+                            outputs=draw_inpaint_input_image,
+                        )
+                        draw_inpaint_overlay = gr.Checkbox(
+                            False, label="Overlay Original Image"
+                        )
                     with gr.Column():
                         draw_inpaint_output_information = gr.Textbox(
                             label=webui_language["i2i"]["output_info"]
@@ -216,6 +220,7 @@ def plugin():
                 draw_inpaint_input_path,
                 draw_inpaint_mask_path,
                 draw_inpaint_input_image,
+                draw_inpaint_overlay,
                 draw_inpaint_batch_switch,
                 draw_inpaint_positive_input,
                 draw_inpaint_negative_input,
