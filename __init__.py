@@ -186,6 +186,7 @@ def plugin():
                 with gr.Row():
                     draw_inpaint_wildcard_file = gr.Dropdown(
                         choices=FAVORTES_FILE,
+                        value="",
                         label="wildcard文件",
                     )
                     draw_inpaint_wildcard_name = gr.Dropdown(label="名称")
