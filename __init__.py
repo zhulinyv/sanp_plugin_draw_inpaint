@@ -6,6 +6,7 @@ from plugins.inpaint.sanp_plugin_draw_inpaint.utils import for_webui as draw_inp
 from src.text2image_nsfw import return_resolution
 from utils.env import env
 from utils.utils import (
+    CHARACTER_POSITION,
     FAVORTES_FILE,
     NOISE_SCHEDULE,
     RESOLUTION,
@@ -158,12 +159,20 @@ def plugin():
                     with gr.Row():
                         with gr.Column():
                             draw_inpaint_sm = gr.Checkbox(
-                                value=False, label="sm", scale=2
+                                value=False,
+                                label="sm",
+                                scale=2,
+                                visible=(
+                                    False if "nai-diffusion-4" in env.model else True
+                                ),
                             )
                             draw_inpaint_sm_dyn = gr.Checkbox(
                                 value=False,
                                 label=webui_language["t2i"]["smdyn"],
                                 scale=2,
+                                visible=(
+                                    False if "nai-diffusion-4" in env.model else True
+                                ),
                             )
                         with gr.Column():
                             draw_inpaint_variety = gr.Checkbox(
@@ -215,6 +224,47 @@ def plugin():
                     inputs=[draw_inpaint_wildcard_file, draw_inpaint_wildcard_name],
                     outputs=draw_inpaint_wildcard_tag,
                 )
+            with gr.Tab(
+                "Character", visible=True if "nai-diffusion-4" in env.model else False
+            ):
+                draw_inpaint_ai_choice = gr.Checkbox(
+                    True, label="AI 选择位置(AI's choice)"
+                )
+                gr.Markdown("<hr>")
+
+                def character_compents(number):
+                    with gr.Row():
+                        draw_inpaint_character_position = gr.Dropdown(
+                            CHARACTER_POSITION, label="位置(Position)"
+                        )
+                        draw_inpaint_character_switch = gr.Checkbox(
+                            False, label="启用(Switch)"
+                        )
+                        gr.Textbox(f"角色{number}", show_label=False)
+                    with gr.Row():
+                        draw_inpaint_character_positive = gr.Textbox(
+                            label="正面提示词(Positive)", lines=3
+                        )
+                        draw_inpaint_character_negative = gr.Textbox(
+                            label="负面提示词(Negative)", lines=3
+                        )
+                    for _ in range(3):
+                        gr.Markdown("<hr>")
+                    return (
+                        draw_inpaint_character_switch,
+                        draw_inpaint_character_positive,
+                        draw_inpaint_character_negative,
+                        draw_inpaint_character_position,
+                    )
+
+                draw_inpaint_components_list = [
+                    character_compents(num) for num in range(1, 7)
+                ]
+                draw_inpaint_new_components_list = [
+                    component
+                    for components in draw_inpaint_components_list
+                    for component in components
+                ]
         draw_inpaint_generate_button.click(
             fn=draw_inpaint,
             inputs=[
@@ -238,6 +288,8 @@ def plugin():
                 draw_inpaint_variety,
                 draw_inpaint_decrisp,
                 draw_inpaint_seed,
-            ],
+            ]
+            + [draw_inpaint_ai_choice]
+            + draw_inpaint_new_components_list,
             outputs=[draw_inpaint_output_image, draw_inpaint_output_information],
         )

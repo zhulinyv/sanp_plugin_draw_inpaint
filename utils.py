@@ -3,6 +3,7 @@ import random
 import ujson as json
 
 from src.image2image import prepare_json
+from utils.env import env
 from utils.imgtools import (
     change_the_mask_color_to_white,
     get_img_info,
@@ -15,6 +16,7 @@ from utils.utils import (
     file_path2list,
     file_path2name,
     generate_image,
+    position_to_float,
     return_x64,
     save_image,
 )
@@ -41,6 +43,7 @@ def for_webui(
     draw_inpaint_variety,
     draw_inpaint_decrisp,
     draw_inpaint_seed,
+    *args,
 ):
     if open_button:
         main(input_path, mask_path, draw_inpaint_overlay)
@@ -86,22 +89,91 @@ def for_webui(
             "./output/temp_draw_inpaint_img.png",
             "./output/temp_draw_inpaint_mask.png",
             draw_inpaint_overlay,
-            draw_inpaint_strength,
-            draw_inpaint_noise,
+            *args,
+            draw_inpaint_strength=draw_inpaint_strength,
+            draw_inpaint_noise=draw_inpaint_noise,
         )
     return path, None
 
 
-def inpaint(img_path, mask_path, inpaint_overlay, *args):
+def inpaint(img_path, mask_path, inpaint_overlay, *args, **kwargs):
     imginfo = get_img_info(img_path)
     json_for_inpaint = prepare_json(imginfo, img_path)
     json_for_inpaint["parameters"]["mask"] = img_to_base64(mask_path)
-    json_for_inpaint["model"] = "nai-diffusion-3-inpainting"
+    if env.model == "nai-diffusion-4-curated-preview":
+        model = "nai-diffusion-4-curated-inpainting"
+    elif env.model == "nai-diffusion-4-full":
+        model = "nai-diffusion-4-full-inpainting"
+    else:
+        model = (
+            f"{env.model}-inpainting"
+            if env.model != "nai-diffusion-2"
+            else "nai-diffusion-3-inpainting"
+        )
+    json_for_inpaint["model"] = model
     json_for_inpaint["action"] = "infill"
     json_for_inpaint["add_original_image"] = inpaint_overlay
-    if args:
-        json_for_inpaint["strength"] = args[0]
-        json_for_inpaint["noise"] = args[1]
+    json_for_inpaint["strength"] = kwargs["inpaint_strength"]
+    json_for_inpaint["noise"] = kwargs["inpaint_noise"]
+
+    if "nai-diffusion-4" in env.model:
+        json_for_inpaint["parameters"]["use_coords"] = args[0]
+        json_for_inpaint["parameters"]["v4_prompt"]["caption"]["base_caption"] = (
+            json_for_inpaint["input"]
+        )
+        json_for_inpaint["parameters"]["v4_prompt"]["use_coords"] = args[0]
+        json_for_inpaint["parameters"]["v4_negative_prompt"]["caption"][
+            "base_caption"
+        ] = json_for_inpaint["parameters"]["negative_prompt"]
+
+        args = args[1:]
+        components_list = []
+        while args:
+            components_list.append(args[0:4])
+            args = args[4:]
+
+        json_for_inpaint["parameters"]["characterPrompts"] = [
+            {
+                "prompt": components[1],
+                "uc": components[2],
+                "center": {
+                    "x": position_to_float(components[3])[0],
+                    "y": position_to_float(components[3])[1],
+                },
+            }
+            for components in components_list
+            if components[0]
+        ]
+
+        json_for_inpaint["parameters"]["v4_prompt"]["caption"]["char_captions"] = [
+            {
+                "char_caption": components[1],
+                "centers": [
+                    {
+                        "x": position_to_float(components[3])[0],
+                        "y": position_to_float(components[3])[1],
+                    }
+                ],
+            }
+            for components in components_list
+            if components[0]
+        ]
+
+        json_for_inpaint["parameters"]["v4_negative_prompt"]["caption"][
+            "char_captions"
+        ] = [
+            {
+                "char_caption": components[2],
+                "centers": [
+                    {
+                        "x": position_to_float(components[3])[0],
+                        "y": position_to_float(components[3])[1],
+                    }
+                ],
+            }
+            for components in components_list
+            if components[0]
+        ]
 
     saved_path = save_image(
         generate_image(json_for_inpaint),
