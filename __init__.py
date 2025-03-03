@@ -149,6 +149,13 @@ def plugin():
                             step=0.1,
                             label=webui_language["t2i"]["scale"],
                         )
+                        draw_inpaint_rescale = gr.Slider(
+                            minimum=0,
+                            maximum=1,
+                            value=env.rescale,
+                            step=0.01,
+                            label="Prompt Guidance Rescale",
+                        )
                         draw_inpaint_steps = gr.Slider(
                             minimum=0,
                             maximum=50,
@@ -179,7 +186,17 @@ def plugin():
                                 value=False, label="variety"
                             )
                             draw_inpaint_decrisp = gr.Checkbox(
-                                value=False, label="decrisp"
+                                value=(
+                                    env.decrisp
+                                    if "nai-diffusion-4" not in env.model
+                                    else False
+                                ),
+                                label="decrisp",
+                                visible=(
+                                    True
+                                    if "nai-diffusion-4" not in env.model
+                                    else False
+                                ),
                             )
                         with gr.Column(scale=1):
                             draw_inpaint_seed = gr.Textbox(
@@ -282,6 +299,7 @@ def plugin():
                 draw_inpaint_strength,
                 draw_inpaint_noise,
                 draw_inpaint_scale,
+                draw_inpaint_rescale,
                 draw_inpaint_steps,
                 draw_inpaint_sm,
                 draw_inpaint_sm_dyn,
