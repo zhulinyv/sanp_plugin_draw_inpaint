@@ -80,7 +80,14 @@ def for_webui(
             json_for_inpaint["parameters"]["sm"] = False
             json_for_inpaint["parameters"]["sm_dyn"] = False
         json_for_inpaint["parameters"]["skip_cfg_above_sigma"] = (
-            19 if draw_inpaint_variety else None
+            19.343056794463642
+            if "nai-diffusion-4" in env.model
+            and env.model != "nai-diffusion-4-5-curated"
+            else (
+                19
+                if env.model != "nai-diffusion-4-5-curated"
+                else 58 if draw_inpaint_variety else None
+            )
         )
         json_for_inpaint["parameters"]["dynamic_thresholding"] = draw_inpaint_decrisp
         seed = (
