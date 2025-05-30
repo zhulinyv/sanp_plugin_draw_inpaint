@@ -81,11 +81,10 @@ def for_webui(
             json_for_inpaint["parameters"]["sm_dyn"] = False
         json_for_inpaint["parameters"]["skip_cfg_above_sigma"] = (
             19.343056794463642
-            if "nai-diffusion-4" in env.model
-            and env.model != "nai-diffusion-4-5-curated"
+            if "nai-diffusion-4" in env.model and "nai-diffusion-4-5" not in env.model
             else (
                 19
-                if env.model != "nai-diffusion-4-5-curated"
+                if "nai-diffusion-4-5" not in env.model
                 else 58 if draw_inpaint_variety else None
             )
         )
